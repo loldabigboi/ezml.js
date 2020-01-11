@@ -102,7 +102,7 @@ class NeuralNetwork {
         let outputLayer = this.layers[this.layers.length-1];
 
         let dErrorActivationMatrix = this.dErrorFn(outputLayer.neurons, targetsMatrix)
-        for (let i = this.layers.length-1; i > 0; i++) {
+        for (let i = this.layers.length-1; i > 0; i--) {
 
             let currLayer = this.layers[i];
             let nextLayer = this.layers[i-1];
