@@ -49,17 +49,17 @@ class NeuralNetwork {
         for (let i = 0; i < this.layerBlueprints.length; i++) {
 
             let layerType = this.layerBlueprints[i].type;
-            let nextLayerType = this.layerBlueprints[i+1].type;
             let layerOptions = this.layerBlueprints[i].options;
-            let nextLayerOptions = this.layerBlueprints[i].options;
+            let prevLayer = this.layerBlueprints[i-1];
 
             if (i === 0 && !layerOptions.numInputs) {  // first hidden layer
                 throw new Error("First hidden error must specify number of inputs!");
             }
 
+            let numInputs = (prevLayer) ? prevLayer.options.numNeurons : layerOptions.numInputs;
+
             if (layerType === LayerConstants.FULLY_CONNECTED) {
-                this.layers.push(new FullyConnectedLayer(layerOptions.numNeurons,
-                                                            nextLayerOptions.numNeurons ));
+                this.layers.push(new FullyConnectedLayer(layerOptions.numNeurons, numInputs, layerOptions ));
             } else {
                 throw new Error("Only supported layer type atm is fully-connected layers.");
             }
@@ -80,7 +80,7 @@ class NeuralNetwork {
 
             let currLayer = this.layers[i];
 
-            if (i === 0 && values.length != currLayer.numInputs) {
+            if (i === 0 && prevActivations.rows != currLayer.numInputs) {
                 throw new Error("Number of inputs does not match number of input neurons");
             }
 
