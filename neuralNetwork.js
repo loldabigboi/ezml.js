@@ -130,9 +130,9 @@ class NeuralNetwork {
             throw new Error("compile() must be called before training can take place.");
         }
 
-        this._feedForward(inputs, 0);
-        this._backPropagation(this.neurons.length-1, null, targets);
-        return this.neurons[this.neurons.length-1];  // return guessed outputs
+        this._feedForward(inputs);
+        this._backPropagation(targets);
+        return this.layers[this.layers.length-1].neurons;  // return guessed outputs
 
     }
 
