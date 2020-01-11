@@ -13,8 +13,10 @@ class NeuralNetwork {
         this.errorType = (options.errorType) ? options.errorType : 
                                                NeuralNetwork.SQUARED_ERROR;
         if (this.errorType == NeuralNetwork.SQUARED_ERROR) {
+            this.errorFn = squaredError;
             this.dErrorFn = dSquaredError;
         } else if (this.errorType == NeuralNetwork.CROSS_ENTROPY) {
+            this.errorFn = crossEntropy;
             this.dErrorFn = dCrossEntropy;
         } else {
             throw new Error("Invalid error function specified.");
@@ -76,7 +78,7 @@ class NeuralNetwork {
 
         let prevActivations = (inputs instanceof Matrix) ? new Matrix(inputs) : 
                                                            Matrix.fromArray(inputs, Matrix.COLUMN);
-        for (let i = 0; i < this.layers.length-1; i++) {
+        for (let i = 0; i < this.layers.length; i++) {
 
             let currLayer = this.layers[i];
 
@@ -84,7 +86,7 @@ class NeuralNetwork {
                 throw new Error("Number of inputs does not match number of input neurons");
             }
 
-            currLayer.neurons = Matrix.product(currLayer.weights, prevActivations);
+            currLayer.neurons = currLayer.activationFn(Matrix.product(currLayer.weights, prevActivations));
             prevActivations = currLayer.neurons;
 
         }
@@ -113,7 +115,7 @@ class NeuralNetwork {
                 dErrorPrevActivationMatrix
             } = currLayer.gDFn(currLayer.neurons, nextLayer.neurons, currLayer.biases, currLayer.weights, 
                                targetsMatrix, dErrorActivationMatrix, currLayer.dActivationFn);
-                
+
             // subtract the calculated derivatives
             currLayer.weights.sub(Matrix.mult(dErrorWeightMatrix, this.learningRate));
             currLayer.biases.sub(Matrix.mult(dErrorBiasMatrix, this.learningRate));

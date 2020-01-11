@@ -70,13 +70,33 @@ function softmax(outputs) {
 }
 
 
-// dError functions
+// Error functions
+
+function squaredError(neuronsMatrix, targetsMatrix) {
+
+    let sum = 0;
+    neuronsMatrix.forEach((val, row, col) => {
+        sum += Math.pow(val - targetsMatrix.get(row, col), 2);
+    }); 
+    return sum;
+
+}
 
 function dSquaredError(neuronsMatrix, targetsMatrix) {
 
     return Matrix.map(neuronsMatrix, (val, row, col) => {
         return val - targetsMatrix.get(row, col);
     }); 
+
+}
+
+function crossEntropy(neuronsMatrix, targetsMatrix) {
+
+    let sum = 0;
+    neuronsMatrix.forEach((val, row, col) => {
+        sum -= Math.log(val) * targetsMatrix.get(row, col);
+    });
+    return sum;
 
 }
 
