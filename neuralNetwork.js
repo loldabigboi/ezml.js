@@ -31,6 +31,13 @@ class NeuralNetwork {
         });
     }
 
+    /**
+     * Resets the layerBlueprints array to contain nothing (so you can start building a neural network from scratch)
+     */
+    resetLayers() {
+        this.layerBlueprints = [];
+    }
+
     compile() {
 
         if (!this.layerBlueprints) {
@@ -136,7 +143,7 @@ class NeuralNetwork {
         }
         this._feedForward(inputs);
         return this.layers[this.layers.length-1].neurons;
-        
+
     }
 
     toJSON() {
