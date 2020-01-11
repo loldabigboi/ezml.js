@@ -94,10 +94,7 @@ function dCrossEntropy(neuronsMatrix, targetsMatrix) {
 // Gradient descent for squared error with 1:1 activation function
 // (i.e. each activation is only dependent upon the single corresponding logit)
 // e.g. Sigmoid, Tanh or ReLU
-function oneToOneActivationGD(neurons, prevNeurons, biases, weights, targets, dErrorActivationMatrix, dActivationFn) {
-
-    let neuronsMatrix = Matrix.fromArray(neurons, Matrix.COLUMN);
-    let prevNeuronsMatrix = Matrix.fromArray(prevNeurons, Matrix.COLUMN);
+function oneToOneActivationGD(neuronsMatrix, prevNeuronsMatrix, biases, weights, targets, dErrorActivationMatrix, dActivationFn) {
 
     let dActivationZMatrix = dActivationFn(neuronsMatrix);
 
@@ -127,7 +124,7 @@ function oneToOneActivationGD(neurons, prevNeurons, biases, weights, targets, dE
     let dErrorPrevActivationMatrix = Matrix.map(prevNeuronsMatrix, (val, row, col) => {
         
         let total = 0;
-        for (let i = 0; i < neurons.length; i++) {  // i indexes all the weights for this prev. neuron
+        for (let i = 0; i < neuronsMatrix.rows; i++) {  // i indexes all the weights for this prev. neuron
             let dZPrevActivation = weights.get(i, row);
             let dActivationZ = dActivationZMatrix.get(i, 0);
             let dErrorActivation = dErrorActivationMatrix.get(i, 0);
@@ -146,16 +143,13 @@ function oneToOneActivationGD(neurons, prevNeurons, biases, weights, targets, dE
 }
 
 // Gradient descent iteration for cross entropy error with softmax activation
-function crossEntropySoftmaxGD(neurons, prevNeurons, biases, weights, targets, dErrorActivationMatrix) {
+function crossEntropySoftmaxGD(neuronsMatrix, prevNeuronsMatrix, biases, weights, targets, dErrorActivationMatrix) {
         
     // variable naming: dXY means the partial derivative of X with respect to Y
     //                  dXYMatrix means a matrix of values corresponding to the above
     //                  dXYArray means an array of values corresponding to the above
 
-    let neuronsMatrix = Matrix.fromArray(neurons, Matrix.COLUMN),
-        prevNeuronsMatrix = Matrix.fromArray(prevNeurons, Matrix.COLUMN);
-
-    let dActivationZMatrix = new Matrix(neurons.length, neurons.length);
+    let dActivationZMatrix = new Matrix(neuronsMatrix.rows, neuronsMatrix.rows);
     dActivationZMatrix.map((val, i, j) => {
 
         return i === j ? neurons[j] * (1 - neurons[j]) : 
@@ -166,7 +160,7 @@ function crossEntropySoftmaxGD(neurons, prevNeurons, biases, weights, targets, d
     let dErrorZMatrix = Matrix.map(neuronsMatrix, (val, i, col) => {
 
         let sum = 0;
-        for (let j = 0; j < neurons.length; j++) {
+        for (let j = 0; j < neuronsMatrix.rows; j++) {
             let dErrorActivation = dErrorActivationMatrix.get(j, 0);
             let dActivationZ = dActivationZMatrix.get(i, j);
             sum += dErrorActivation * dActivationZ;
@@ -194,7 +188,7 @@ function crossEntropySoftmaxGD(neurons, prevNeurons, biases, weights, targets, d
     let dErrorPrevActivationMatrix = Matrix.map(prevNeuronsMatrix, (val, row, col) => {
         
         let total = 0;
-        for (let i = 0; i < neurons.length; i++) {  // i indexes all the weights for this prev. neuron
+        for (let i = 0; i < neuronsMatrix.rows; i++) {  // i indexes all the weights for this prev. neuron
             let dZPrevActivation = weights.get(i, row);
             let dErrorZ = dErrorZMatrix.get(i, 0);
             total += dZPrevActivation * dErrorZ;
@@ -202,8 +196,6 @@ function crossEntropySoftmaxGD(neurons, prevNeurons, biases, weights, targets, d
         return total;
 
     });
-
-    neuralNetwork
 
     return {
         dErrorWeightMatrix,
