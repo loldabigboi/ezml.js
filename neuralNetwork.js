@@ -113,7 +113,7 @@ class NeuralNetwork {
                 dErrorPrevActivationMatrix
             } = currLayer.gDFn(currLayer.neurons, nextLayer.neurons, currLayer.biases, currLayer.weights, 
                                targetsMatrix, dErrorActivationMatrix, currLayer.dActivationFn);
-
+                
             // subtract the calculated derivatives
             currLayer.weights.sub(Matrix.mult(dErrorWeightMatrix, this.learningRate));
             currLayer.biases.sub(Matrix.mult(dErrorBiasMatrix, this.learningRate));

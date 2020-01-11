@@ -179,6 +179,17 @@ class Matrix {
         this.values = newValues;
 
     }
+    /**
+     * Calls the callback once for each value in this matrix
+     * @param {function} callback The callback function
+     */
+    forEach(callback) {
+        for (let row = 0; row < this.values.length; row++) {
+            for (let col = 0; col < this.values[0].length; col++) {
+                callback(this.values[row][col], row, col);
+            }
+        }
+    }
 
     /**
      * Replaces each value in this matrix with the result of calling the callback
