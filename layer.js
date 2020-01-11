@@ -11,7 +11,7 @@ class FullyConnectedLayer {
         this.numInputs  = numInputs;  // can be deduced during compile() for hidden layers excl. first one
         this.numNeurons = numNeurons;
         
-        this.activationType = (options.activationType) ? options.hiddenActivationType : 
+        this.activationType = (options.activationType) ? options.activationType : 
                                                          LayerConstants.SIGMOID;
         if (this.activationType == LayerConstants.SIGMOID) {
             this.activationFn        = sigmoid;

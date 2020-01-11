@@ -172,8 +172,8 @@ function crossEntropySoftmaxGD(neuronsMatrix, prevNeuronsMatrix, biases, weights
     let dActivationZMatrix = new Matrix(neuronsMatrix.rows, neuronsMatrix.rows);
     dActivationZMatrix.map((val, i, j) => {
 
-        return i === j ? neurons[j] * (1 - neurons[j]) : 
-                        -neurons[i] * neurons[j];
+        return i === j ? neuronsMatrix.get(j, 0) * (1 - neuronsMatrix.get(j, 0)) : 
+                        -neuronsMatrix.get(i, 0) * neuronsMatrix.get(j, 0);
 
     });
 
@@ -223,16 +223,4 @@ function crossEntropySoftmaxGD(neuronsMatrix, prevNeuronsMatrix, biases, weights
         dErrorPrevActivationMatrix
     }
 
-}
-
-
-/**
- * 
- * @param {Matrix} outputs 
- * @param {Matrix} targets 
- */
-function squaredError(outputs, targets) {
-    return Matrix.map(outputs, (val, row, col) => {
-        return val - targets.get(row, col);
-    }); 
 }

@@ -355,7 +355,7 @@ class Matrix {
         } else if (m.cols === 1) {
             let output = [];
             for (let i = 0; i < m.rows; i++) {
-                output.push(m.get(i, 1));
+                output.push(m.get(i, 0));
             }
             return output;
         } else {
