@@ -132,7 +132,7 @@ class NeuralNetwork {
 
         this._feedForward(inputs);
         this._backPropagation(targets);
-        return this.layers[this.layers.length-1].neurons;  // return guessed outputs
+        return Matrix.to1DArray(this.layers[this.layers.length-1].neurons);  // return guessed outputs
 
     }
 
@@ -142,7 +142,7 @@ class NeuralNetwork {
             throw new Error("compile() must be called before predictions can be made.");
         }
         this._feedForward(inputs);
-        return this.layers[this.layers.length-1].neurons;
+        return Matrix.to1DArray(this.layers[this.layers.length-1].neurons);
 
     }
 
