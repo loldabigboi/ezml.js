@@ -333,6 +333,26 @@ class Matrix {
 
     }
 
+    /**
+     * Converts the passed matrix to a one-dimensional array if possible (does not flatten).
+     * @param {Matrix} m Must be a row or column vector
+     */
+    static to1DArray(m) {
+
+        if (m.rows === 1) {
+            return m.values[0];
+        } else if (m.cols === 1) {
+            let output = [];
+            for (let i = 0; i < m.rows; i++) {
+                output.push(m.get(i, 1));
+            }
+            return output;
+        } else {
+            throw new Error("Matrix cannot be converted to 1D array.");
+        }
+
+    }
+
 }
 // constants used for specifying type of fromArray result (row or column vector)
 Matrix.ROW = 0;
