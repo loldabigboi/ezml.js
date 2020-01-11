@@ -57,7 +57,7 @@ class NeuralNetwork {
                 throw new Error("First hidden error must specify number of inputs!");
             }
 
-            if (layerType === Layer.FULLY_CONNECTED) {
+            if (layerType === LayerConstants.FULLY_CONNECTED) {
                 this.layers.push(new FullyConnectedLayer(layerOptions.numNeurons,
                                                             nextLayerOptions.numNeurons ));
             } else {
