@@ -12,20 +12,20 @@ class FullyConnectedLayer {
         this.numNeurons = numNeurons;
         
         this.activationType = (options.activationType) ? options.hiddenActivationType : 
-                                                         Layer.SIGMOID;
-        if (this.activationType == Layer.SIGMOID) {
+                                                         LayerConstants.SIGMOID;
+        if (this.activationType == LayerConstants.SIGMOID) {
             this.activationFn        = sigmoid;
             this.dActivationFn       = dSigmoid;
             this.gDFn                = oneToOneActivationGD;
-        } else if (this.activationType == Layer.TANH) {
+        } else if (this.activationType == LayerConstants.TANH) {
             this.activationFn        = tanh;
             this.dActivationFn       = dTanh;
             this.gDFn                = oneToOneActivationGD;
-        } else if (this.activationType == Layer.RELU) {
+        } else if (this.activationType == LayerConstants.RELU) {
             this.activationFn        = relu;
             this.dActivationFn       = dRelu;
             this.gDFn                = oneToOneActivationGD;
-        } else if (this.activationType == Layer.SOFTMAX) {
+        } else if (this.activationType == LayerConstants.SOFTMAX) {
             if (this.numNeuronsNext) {  // this is not output layer
                 throw new Error("Softmax can only be used for output layer atm.");
             }
@@ -53,19 +53,21 @@ class FullyConnectedLayer {
 
 }
 
+class LayerConstants {}
+
 // layer type constants
-Layer.FULLY_CONNECTED = "fully-connected";
-Layer.CONVOLUTIONAL = "convolutional";
+LayerConstants.FULLY_CONNECTED = "fully-connected";
+LayerConstants.CONVOLUTIONAL = "convolutional";
 
 // activation constants
-Layer.SIGMOID = "sigmoid";
-Layer.TANH = "tanh";
-Layer.RELU = "relu";
-Layer.SOFTMAX = "softmax";
+LayerConstants.SIGMOID = "sigmoid";
+LayerConstants.TANH = "tanh";
+LayerConstants.RELU = "relu";
+LayerConstants.SOFTMAX = "softmax";
 
 // gd function types
-Layer.SOFTMAX_ENTROPY = "softmax-entropy";
-Layer.ONE_TO_ONE      = "one-to-one";  // *
+LayerConstants.SOFTMAX_ENTROPY = "softmax-entropy";
+LayerConstants.ONE_TO_ONE      = "one-to-one";  // *
 
 // *
 // use when the activation of a neuron is only dependent upon a single logit,
