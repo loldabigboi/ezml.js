@@ -345,8 +345,8 @@ class Matrix {
     }
 
     /**
-     * Converts the passed matrix to a one-dimensional array if possible (does not flatten).
-     * @param {Matrix} m Must be a row or column vector
+     * Converts the passed matrix to a one-dimensional array.
+     * @param {Matrix} m
      */
     static to1DArray(m) {
 
