@@ -60,19 +60,27 @@ class ConvolutionalLayer {
         if (!inputDimensions) {
             throw new Error("Input dimensions not specified.");
         }
-        this.inputDimensions = inputDimensions;
+        this.inputDimensions = inputDimensions.slice();
 
         this.filterDimensions = options.filterDimensions ? options.filterDimensions : [3, 3];
-        for (let dimension of this.filterDimensions) {
-            if (dimension % 2 == 0 || dimension < 1) {
-                throw new Error("Filter dimension must be odd and > 0.");
-            }
+        if (this.filterDimensions.length !== 2) {
+            throw new Error("Filter can only be 2D");
         }
 
         this.numFilters = options.numFilters ? options.numFilters : 8;
         if (this.numFilters < 1) {
             throw new Error("Must have one or more filters.");
         }
+
+        this.outputDimensions = inputDimensions.slice();
+        for (let i = 0; i < 2; i++) {
+            let dimension = this.filterDimensions[i];
+            if (dimension % 2 == 0 || dimension < 1) {
+                throw new Error("Filter dimensions must be odd and > 0.");
+            }
+            this.outputDimensions[i] -= dimension-1; // valid padding
+        }
+        this.outputDimensions[2] *= this.numFilters;  // each input 'image' is filtered once by each filter
 
         this.minValue = options.minValue ? options.minValue : -1;
         this.maxValue = options.minValue ? options.minValue :  1;
@@ -85,6 +93,13 @@ class ConvolutionalLayer {
             })
             this.filters.push(filter);
         }
+
+        this.outputs = [];
+        for (let i = 0; i < this.outputDimensions[2]; i++) {
+            this.outputs.push(new Matrix(this.outputDimensions[0], this.outputDimensions[1]));
+        }
+
+
         
     }
 
@@ -97,13 +112,21 @@ class PoolingLayer {
         if (!inputDimensions) {
             throw new Error("Input dimensions not specified.");
         }
-        this.inputDimensions = inputDimensions;
+        this.inputDimensions = inputDimensions.slice();
 
         this.filterDimensions = options.filterDimensions ? options.filterDimensions : [3, 3];
-        for (let dimension of this.filterDimensions) {
-            if (dimension % 2 == 0 || dimension < 1) {
-                throw new Error("Filter dimension must be odd and > 0.");
+        if (this.filterDimensions.length !== 2) {
+            throw new Error("Filter can only be 2D");
+        }
+        this.outputDimensions = inputDimensions.slice();
+        for (let i = 0; i < 2; i++) {
+            let dimension = this.filterDimensions[i];
+            if (dimension < 1) {
+                throw new Error("Filter dimensions must be > 0.");
+            } else if (this.inputDimensions[i] % dimension != 0) {
+                throw new Error("Filter does not evenly divide input.");
             }
+            this.outputDimensions[i] /= dimension;
         }
 
         this.type = options.type ? options.type : LayerConstants.MAX_POOLING;
@@ -140,6 +163,35 @@ class PoolingLayer {
             throw new Error("Invalid pooling type specified.");
         }
 
+        this.outputs = []
+        for (let i = 0; i < inputDimensions[2]; i++) {
+            this.outputs.push(new Matrix(this.outputDimensions[0],
+                                         this.outputDimensions[1]));
+        }
+
+    }
+
+    processInputs(inputs) {
+
+        for (let i = 0; i < inputs.length; i++) {  // loop through each input 'image'
+            let input = inputs[i];
+            for (let row = 0; row < this.outputDimensions[0]; row++) {
+                for (let col = 0; col < this.outputDimensions[1]; col++) {
+
+                    let vals = [];
+                    for (let filterRow = 0; filterRow < this.filterDimensions[0]; filterRow++) {
+                        for (let filterCol = 0; filterCol < this.filterDimensions[1]; filterCol++) {
+                            vals.push(input.get(row*this.filterDimensions[0] + filterRow, 
+                                                col*this.filterDimensions[1] + filterCol));
+                        }
+                    }
+                    let newVal = this.poolingFn(vals);
+                    this.outputs[i].set(row, col, newVal);
+
+                }
+            }
+        }
+
     }
 
 }
@@ -154,6 +206,7 @@ LayerConstants.AVG_POOLING = "avg-pooling";
 // layer type constants
 LayerConstants.FULLY_CONNECTED = "fully-connected";
 LayerConstants.CONVOLUTIONAL = "convolutional";
+LayerConstants.POOLING = "pooling";
 
 // activation constants
 LayerConstants.SIGMOID = "sigmoid";
