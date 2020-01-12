@@ -48,22 +48,46 @@ class NeuralNetwork {
 
         this.layers = [];
 
+        let prevOutputDimensions;  // either array for convo/pooling or scalar for fully-connected
         for (let i = 0; i < this.layerBlueprints.length; i++) {
 
             let layerType = this.layerBlueprints[i].type;
             let layerOptions = this.layerBlueprints[i].options;
             let prevLayer = this.layerBlueprints[i-1];
 
-            if (i === 0 && !layerOptions.numInputs) {  // first hidden layer
-                throw new Error("First hidden error must specify number of inputs!");
-            }
-
-            let numInputs = (prevLayer) ? prevLayer.options.numNeurons : layerOptions.numInputs;
-
             if (layerType === LayerConstants.FULLY_CONNECTED) {
+                
+                if (i === 0 && !layerOptions.numInputs) {  // first hidden layer
+                    throw new Error("First hidden error must specify number of inputs!");
+                }
+                let numInputs = (prevLayer) ? prevLayer.options.numNeurons : layerOptions.numInputs;
                 this.layers.push(new FullyConnectedLayer(layerOptions.numNeurons, numInputs, layerOptions ));
+            
+            } else if (layerType === LayerConstants.CONVOLUTIONAL ||
+                       layerType === LayerConstants.POOLING) {
+
+                if (prevLayer.type !== LayerConstants.CONVOLUTIONAL && 
+                    prevLayer.type !== LayerConstants.POOLING) {
+                    throw new Error("Convolutional / pooling layer must be preceded by a convolutional / pooling layer.");
+                }
+                
+                let inputDimensions;
+                if (i === 0) {
+                    if (!layerOptions.inputDimensions) {
+                        throw new Error("First convolutional / pooling hidden layer must specify input dimensions.");
+                    }
+                    inputDimensions = layerOptions.inputDimensions;
+                } else {
+                    inputDimensions = this.layers[i-1].outputDimensions;
+                }
+
+                let layer = layerType === LayerConstants.CONVOLUTIONAL ?
+                            new ConvolutionalLayer(inputDimensions, layerOptions) :
+                            new PoolingLayer(inputDimensions, layerOptions);
+                this.layers.push(layer);
+
             } else {
-                throw new Error("Only supported layer type atm is fully-connected layers.");
+                throw new Error("Invalid layer type (only fully-connected, pooling, and convolutional are supported atm.");
             }
 
         }
