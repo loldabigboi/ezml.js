@@ -98,9 +98,51 @@ class ConvolutionalLayer {
         for (let i = 0; i < this.outputDimensions[2]; i++) {
             this.outputs.push(new Matrix(this.outputDimensions[0], this.outputDimensions[1]));
         }
-
-
         
+    }
+
+    /**
+     * 
+     * @param {Matrix[]} inputs 
+     */
+    processInputs(inputs) {
+
+        let outputIndex = 0;
+        for (let i = 0; i < inputs.length; i++) {  // loop through each input 'image'
+            
+            let input = inputs[i];
+            for (let filter of this.filters) {
+
+                let rowOffset = (filter.rows - 1)/2,
+                    colOffset = (filter.cols - 1)/2;
+
+                let outputMatrix = this.outputs[outputIndex];
+
+                for (let row = 0; row < this.outputDimensions[0]; row++) {
+                    for (let col = 0; col < this.outputDimensions[1]; col++) {
+
+                        let vals = [];
+                        for (let filterRow = 0; filterRow < this.filterDimensions[0]; filterRow++) {
+                            for (let filterCol = 0; filterCol < this.filterDimensions[1]; filterCol++) {
+                                
+                                let actualRow = row + rowOffset + filterRow,
+                                    actualCol = col + colOffset + filterCol;
+
+                                let newVal = input.get(actualRow, actualCol) * filter.get(filterRow, filterCol);
+                                outputMatrix.set(row, col, newVal);                  
+                                
+                            }
+                        }
+
+                    }
+                }
+
+                outputIndex++;
+
+            }
+ 
+        }
+
     }
 
 }
