@@ -273,7 +273,7 @@ class Matrix {
 
         } else {
             result = new Matrix(1, array.length);
-            result.values = [array];
+            result.values = [array.slice()];
         }
 
         return result;
