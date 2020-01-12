@@ -130,7 +130,7 @@ class ConvolutionalLayer {
 
                                 let newVal = input.get(actualRow, actualCol) * filter.get(filterRow, filterCol);
                                 outputMatrix.set(row, col, newVal);                  
-                                
+
                             }
                         }
 
@@ -242,7 +242,7 @@ class LayerConstants {}
 
 // pooling type constants
 LayerConstants.MAX_POOLING = "max-pooling";
-LayerConstants.MIN_POOLING = "max-pooling";
+LayerConstants.MIN_POOLING = "min-pooling";
 LayerConstants.AVG_POOLING = "avg-pooling";
 
 // layer type constants
