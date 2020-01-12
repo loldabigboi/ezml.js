@@ -55,12 +55,12 @@ class FullyConnectedLayer {
 
 class ConvolutionalLayer {
 
-    constructor(options) {
+    constructor(inputDimensions, options) {
 
-        if (!options.inputDimensions) {
+        if (!inputDimensions) {
             throw new Error("Input dimensions not specified.");
         }
-        this.inputDimensions = options.inputDimensions;
+        this.inputDimensions = inputDimensions;
 
         this.filterDimensions = options.filterDimensions ? options.filterDimensions : [3, 3];
         for (let dimension of this.filterDimensions) {
@@ -92,12 +92,12 @@ class ConvolutionalLayer {
 
 class PoolingLayer {
 
-    constructor(options) {
+    constructor(inputDimensions, options) {
 
-        if (!options.inputDimensions) {
+        if (!inputDimensions) {
             throw new Error("Input dimensions not specified.");
         }
-        this.inputDimensions = options.inputDimensions;
+        this.inputDimensions = inputDimensions;
 
         this.filterDimensions = options.filterDimensions ? options.filterDimensions : [3, 3];
         for (let dimension of this.filterDimensions) {
