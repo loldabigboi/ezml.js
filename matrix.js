@@ -350,17 +350,7 @@ class Matrix {
      */
     static to1DArray(m) {
 
-        if (m.rows === 1) {
-            return m.values[0];
-        } else if (m.cols === 1) {
-            let output = [];
-            for (let i = 0; i < m.rows; i++) {
-                output.push(m.get(i, 0));
-            }
-            return output;
-        } else {
-            throw new Error("Matrix cannot be converted to 1D array.");
-        }
+        return this.values.flat(Infinity);
 
     }
 
