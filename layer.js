@@ -53,6 +53,43 @@ class FullyConnectedLayer {
 
 }
 
+class ConvolutionalLayer {
+
+    constructor(options) {
+
+        if (!options.inputDimensions) {
+            throw new Error("Input image dimensions not specified.");
+        }
+        this.inputDimensions = options.inputDimensions;
+
+        this.filterDimensions = options.filterDimensions ? options.filterDimensions : [3, 3];
+        for (let dimension of this.filterDimensions) {
+            if (dimension % 2 == 0 || dimension < 1) {
+                throw new Error("Filter dimension must be odd and > 0.");
+            }
+        }
+
+        this.numFilters = options.numFilters ? options.numFilters : 8;
+        if (this.numFilters < 1) {
+            throw new Error("Must have one or more filters.");
+        }
+
+        this.minValue = options.minValue ? options.minValue : -1;
+        this.maxValue = options.minValue ? options.minValue :  1;
+
+        this.filters = [];
+        for (let i = 0; i < this.numFilters; i++) {
+            let filter = new Matrix(this.filterSize, this.filterSize);
+            filter.map(() => {
+                return this.minValue + Math.random()*(this.maxValue - this.minValue);
+            })
+            this.filters.push(filter);
+        }
+        
+    }
+
+}
+
 class LayerConstants {}
 
 // layer type constants
