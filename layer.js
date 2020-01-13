@@ -156,7 +156,7 @@ class PoolingLayer {
         }
         this.inputDimensions = inputDimensions.slice();
 
-        this.filterDimensions = options.filterDimensions ? options.filterDimensions : [3, 3];
+        this.filterDimensions = options.filterDimensions ? options.filterDimensions : [2, 2];
         if (this.filterDimensions.length !== 2) {
             throw new Error("Filter can only be 2D");
         }
