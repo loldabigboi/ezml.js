@@ -207,6 +207,16 @@ class Matrix {
     }
 
     /**
+     * Returns a 1D array representation of this matrix (flattens it).
+     * @param {*} m 
+     */
+    to1DArray() {
+
+        return this.values.flat(Infinity);
+
+    }
+
+    /**
      * Prints the values in this matrix to console in a table format
      */
     print() {
@@ -345,12 +355,11 @@ class Matrix {
     }
 
     /**
-     * Converts the passed matrix to a one-dimensional array.
-     * @param {Matrix} m
+     * Converts the passed matrix to a one-dimensional array (static version).
      */
     static to1DArray(m) {
 
-        return this.values.flat(Infinity);
+        return m.values.flat(Infinity);
 
     }
 

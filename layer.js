@@ -5,7 +5,7 @@ class FullyConnectedLayer {
         if (!numNeurons) {
             throw new Error("Number of neurons not specified.");
         } else if (!numInputs) {
-            throw new Error("Number of inputs for next layer not specified.");
+            throw new Error("Number of inputs not specified.");
         }
 
         this.numInputs  = numInputs;  // can be deduced during compile() for hidden layers excl. first one

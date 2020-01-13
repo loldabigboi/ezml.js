@@ -50,6 +50,10 @@ class NeuralNetwork {
             throw new Error("No layers to compile!");
         }
 
+        if (this.layerBlueprints[this.layerBlueprints.length-1].type !== LayerConstants.FULLY_CONNECTED) {
+            throw new Error("Output layer must be a fully-connected layer.");
+        }
+
         this.layers = [];
 
         for (let i = 0; i < this.layerBlueprints.length; i++) {
@@ -63,8 +67,20 @@ class NeuralNetwork {
                 if (i === 0 && !layerOptions.numInputs) {  // first hidden layer
                     throw new Error("First hidden error must specify number of inputs!");
                 }
-                let numInputs = (prevLayer) ? prevLayer.options.numNeurons : layerOptions.numInputs;
-                this.layers.push(new FullyConnectedLayer(layerOptions.numNeurons, numInputs, layerOptions ));
+                let numInputs;
+                if (prevLayer) {
+                    if (prevLayer.type === LayerConstants.FULLY_CONNECTED) {
+                        numInputs = prevLayer.options.numNeurons;
+                    } else {  // conv / pooling layer
+                        // rows * cols * depth -> i.e. length of flattened matrices
+                        numInputs = this.layers[i-1].outputDimensions.reduce((prevVal, currVal) => {
+                            return prevVal * currVal;
+                        }, 1);
+                    }
+                } else {
+                    numInputs = layerOptions.numInputs
+                }
+                this.layers.push(new FullyConnectedLayer(layerOptions.numNeurons, numInputs, layerOptions));
             
             } else if (layerType === LayerConstants.CONVOLUTIONAL ||
                        layerType === LayerConstants.POOLING) {
@@ -138,6 +154,7 @@ class NeuralNetwork {
                     // need to flatten inputs
                     let newInputs = [];
                     for (let m of inputs) {
+                        console.log(m);
                         newInputs = newInputs.concat(m.to1DArray());
                     }
 
@@ -211,7 +228,7 @@ class NeuralNetwork {
             throw new Error("compile() must be called before predictions can be made.");
         }
         this._feedForward(inputs);
-        console.log(this.layers);
+        console.log(this.layers[this.layers.length-1]);
         return Matrix.to1DArray(this.layers[this.layers.length-1].neurons);
 
     }
