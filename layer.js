@@ -172,43 +172,46 @@ class PoolingLayer {
         }
 
         this.type = options.type ? options.type : LayerConstants.MAX_POOLING;
-        if (this.type == LayerConstants.MAX_POOLING) {
-            this.poolingFn = function(arraySegment) {
-                // assumes arraySegment is a flattened array
-                let max = -Infinity;
-                for (let val of arraySegment) {
-                    if (val > max) {
-                        max = val;
-                    }
-                }
-                return max;
-            }
-        } else if (this.type == LayerConstants.MIN_POOLING) {
-            this.poolingFn = function(arraySegment) {
-                let min = Infinity;
-                for (let val of arraySegment) {
-                    if (val < min) {
-                        min = val;
-                    }
-                }
-                return min;
-            }
-        } else if (this.type == LayerConstants.AVG_POOLING){
-            this.poolingFn = function(arraySegment) {
-                let sum = 0;
-                for (let val of arraySegment) {
-                    sum += val;
-                }
-                return sum / arraySegment.length;
-            }
-        } else {
-            throw new Error("Invalid pooling type specified.");
-        }
+        // if (this.type == LayerConstants.MAX_POOLING) {
+        //     this.poolingFn = function(arraySegment) {
+        //         // assumes arraySegment is a flattened array
+        //         let max = -Infinity;
+        //         for (let val of arraySegment) {
+        //             if (val > max) {
+        //                 max = val;
+        //             }
+        //         }
+        //         return max;
+        //     }
+        // } else if (this.type == LayerConstants.MIN_POOLING) {
+        //     this.poolingFn = function(arraySegment) {
+        //         let min = Infinity;
+        //         for (let val of arraySegment) {
+        //             if (val < min) {
+        //                 min = val;
+        //             }
+        //         }
+        //         return min;
+        //     }
+        // } else if (this.type == LayerConstants.AVG_POOLING){
+        //     this.poolingFn = function(arraySegment) {
+        //         let sum = 0;
+        //         for (let val of arraySegment) {
+        //             sum += val;
+        //         }
+        //         return sum / arraySegment.length;
+        //     }
+        // } else {
+        //     throw new Error("Invalid pooling type specified.");
+        // }
 
-        this.outputs = []
+        this.outputs = [];
+        this.contributionMatrices = [];  // keeps track of how 'responsible' each input value is for the output
         for (let i = 0; i < inputDimensions[2]; i++) {
             this.outputs.push(new Matrix(this.outputDimensions[0],
                                          this.outputDimensions[1]));
+            this.contributionMatrices.push(new Matrix(this.inputDimensions[0],
+                                                      this.inputDimensions[1]))
         }
 
     }
@@ -220,16 +223,72 @@ class PoolingLayer {
             for (let row = 0; row < this.outputDimensions[0]; row++) {
                 for (let col = 0; col < this.outputDimensions[1]; col++) {
 
-                    let vals = [];
-                    for (let filterRow = 0; filterRow < this.filterDimensions[0]; filterRow++) {
-                        for (let filterCol = 0; filterCol < this.filterDimensions[1]; filterCol++) {
-                            vals.push(input.get(row*this.filterDimensions[0] + filterRow, 
-                                                col*this.filterDimensions[1] + filterCol));
-                        }
-                    }
-                    let newVal = this.poolingFn(vals);
-                    this.outputs[i].set(row, col, newVal);
+                    let newVal;
+                    if (this.type === LayerConstants.MAX_POOLING || 
+                        this.type === LayerConstants.MIN_POOLING) {
+                        
+                        let val;
+                        let valRow, valCol;
+                        for (let filterRow = 0; filterRow < this.filterDimensions[0]; filterRow++) {
+                            for (let filterCol = 0; filterCol < this.filterDimensions[1]; filterCol++) {
 
+                                let inputRow = row*this.filterDimensions[0] + filterRow,
+                                    inputCol = col*this.filterDimensions[1] + filterCol;
+                                
+                                let inputVal = input.get(inputRow, inputCol);
+                                if (!val) {
+
+                                    val = inputVal;
+                                    this.contributionMatrices[i].set(inputRow, inputCol, 1);
+
+                                } else if ((this.type === LayerConstants.MIN_POOLING && inputVal < val) ||
+                                           (this.type === LayerConstants.MAX_POOLING && inputVal > val)) {
+
+                                    this.contributionMatrices[i].set(valRow, valCol, 0);
+                                    this.contributionMatrices[i].set(inputRow, inputCol, 1);
+                                    val = inputVal;
+                                    valRow = inputRow;
+                                    valCol = inputCol;
+
+                                }
+                                
+                            }
+                        }
+
+                    } else if (this.type === LayerConstants.AVG_POOLING) {
+
+                        let sum;
+                        for (let filterRow = 0; filterRow < this.filterDimensions[0]; filterRow++) {
+                            for (let filterCol = 0; filterCol < this.filterDimensions[1]; filterCol++) {
+
+                                let inputRow = row*this.filterDimensions[0] + filterRow,
+                                    inputCol = col*this.filterDimensions[1] + filterCol;
+                                
+                                sum += input.get(inputRow, inputCol);
+                                
+                            }
+                        }
+
+                        for (let filterRow = 0; filterRow < this.filterDimensions[0]; filterRow++) {
+                            for (let filterCol = 0; filterCol < this.filterDimensions[1]; filterCol++) {
+
+                                let inputRow = row*this.filterDimensions[0] + filterRow,
+                                    inputCol = col*this.filterDimensions[1] + filterCol;
+                                
+                                this.contributionMatrices[i].set(inputRow, inputCol, input.get(inputRow, inputCol)/sum);
+                                
+                            }
+                        }
+
+                        let numVals = this.filterDimensions[0]*this.filterDimensions[1];
+                        newVal = sum / numVals;
+
+                     } else {
+                         throw new Error("Invalid pooling type.");
+                     }
+                         
+                     this.outputs[i].set(row, col, newVal);
+ 
                 }
             }
         }
