@@ -7,6 +7,10 @@ class NeuralNetwork {
      */
      constructor(options) {
 
+        if (!options) {
+            options = {};
+        }
+
         this.layerBlueprints = [];
         this.layers = [];
 
@@ -48,7 +52,6 @@ class NeuralNetwork {
 
         this.layers = [];
 
-        let prevOutputDimensions;  // either array for convo/pooling or scalar for fully-connected
         for (let i = 0; i < this.layerBlueprints.length; i++) {
 
             let layerType = this.layerBlueprints[i].type;
@@ -65,19 +68,18 @@ class NeuralNetwork {
             
             } else if (layerType === LayerConstants.CONVOLUTIONAL ||
                        layerType === LayerConstants.POOLING) {
-
-                if (prevLayer.type !== LayerConstants.CONVOLUTIONAL && 
-                    prevLayer.type !== LayerConstants.POOLING) {
-                    throw new Error("Convolutional / pooling layer must be preceded by a convolutional / pooling layer.");
-                }
                 
                 let inputDimensions;
                 if (i === 0) {
                     if (!layerOptions.inputDimensions) {
                         throw new Error("First convolutional / pooling hidden layer must specify input dimensions.");
-                    }
+                    } 
                     inputDimensions = layerOptions.inputDimensions;
                 } else {
+                    if (prevLayer.type !== LayerConstants.CONVOLUTIONAL && 
+                        prevLayer.type !== LayerConstants.POOLING) {
+                        throw new Error("Convolutional / pooling layer must be preceded by a convolutional / pooling layer.");
+                    }
                     inputDimensions = this.layers[i-1].outputDimensions;
                 }
 
@@ -95,23 +97,59 @@ class NeuralNetwork {
     }
 
     /**
-     * Feeds the passed inputs forwards through the neural network.
-     * @param {number[] | Matrix} inputs 
+     * Feeds the passed initial inputs forward through the neural network.
+     * @param {Matrix[]} initInputs 
      */
-    _feedForward(inputs) {
+    _feedForward(initInputs) {
 
-        let prevActivations = (inputs instanceof Matrix) ? new Matrix(inputs) : 
-                                                           Matrix.fromArray(inputs, Matrix.COLUMN);
+        let inputs = initInputs;
         for (let i = 0; i < this.layers.length; i++) {
 
             let currLayer = this.layers[i];
+            let prevLayer = this.layers[i-1];
 
-            if (i === 0 && prevActivations.rows != currLayer.numInputs) {
-                throw new Error("Number of inputs does not match number of input neurons");
+            // if (i === 0 && prevActivations.rows != currLayer.numInputs) {
+            //     throw new Error("Number of inputs does not match number of input neurons");
+            // }
+
+            if (currLayer instanceof ConvolutionalLayer ||
+                currLayer instanceof PoolingLayer) {
+
+                if (!prevLayer) {  // we are the first hidden layer
+
+                    // check that input matches the expected dimensions
+                    // (should be guaranteed for all layers past the first
+                    // thanks to the compile() method)
+                    if (inputs[0].rows != currLayer.inputDimensions[0] ||
+                        inputs[0].cols != currLayer.inputDimensions[1] ||
+                        inputs.length  != currLayer.inputDimensions[2]) {
+                        throw new Error("Input dimensions do not match dimensions specified for the input layer.");
+                    }         
+
+                }
+
+                currLayer.processInputs(inputs);
+                inputs = currLayer.outputs;
+
+            } else {  // fully-connected layer
+                
+                if (Array.isArray(inputs)) {  // last layer was conv/pooling
+
+                    // need to flatten inputs
+                    let newInputs = [];
+                    for (let m of inputs) {
+                        newInputs = newInputs.concat(m.to1DArray());
+                    }
+
+                    // then convert to column vector
+                    inputs = Matrix.fromArray(newInputs, Matrix.COLUMN);
+
+                }
+
+                currLayer.neurons = currLayer.activationFn(Matrix.product(currLayer.weights, inputs));
+                inputs = currLayer.neurons;
+
             }
-
-            currLayer.neurons = currLayer.activationFn(Matrix.product(currLayer.weights, prevActivations));
-            prevActivations = currLayer.neurons;
 
         }
 
@@ -173,7 +211,7 @@ class NeuralNetwork {
             throw new Error("compile() must be called before predictions can be made.");
         }
         this._feedForward(inputs);
-        
+        console.log(this.layers);
         return Matrix.to1DArray(this.layers[this.layers.length-1].neurons);
 
     }

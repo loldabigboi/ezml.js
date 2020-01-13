@@ -87,7 +87,7 @@ class ConvolutionalLayer {
 
         this.filters = [];
         for (let i = 0; i < this.numFilters; i++) {
-            let filter = new Matrix(this.filterSize, this.filterSize);
+            let filter = new Matrix(this.filterDimensions[0], this.filterDimensions[1]);
             filter.map(() => {
                 return this.minValue + Math.random()*(this.maxValue - this.minValue);
             })
@@ -121,14 +121,14 @@ class ConvolutionalLayer {
                 for (let row = 0; row < this.outputDimensions[0]; row++) {
                     for (let col = 0; col < this.outputDimensions[1]; col++) {
 
-                        let vals = [];
-                        for (let filterRow = 0; filterRow < this.filterDimensions[0]; filterRow++) {
-                            for (let filterCol = 0; filterCol < this.filterDimensions[1]; filterCol++) {
+                        for (let filterRow = -rowOffset; filterRow     <= rowOffset; filterRow++) {
+                            for (let filterCol = -colOffset; filterCol <= colOffset; filterCol++) {
                                 
                                 let actualRow = row + rowOffset + filterRow,
                                     actualCol = col + colOffset + filterCol;
 
-                                let newVal = input.get(actualRow, actualCol) * filter.get(filterRow, filterCol);
+                                let newVal = input.get(actualRow, actualCol) * 
+                                             filter.get(filterRow + rowOffset, filterCol + colOffset);
                                 outputMatrix.set(row, col, newVal);                  
 
                             }
