@@ -182,24 +182,55 @@ class NeuralNetwork {
                                                           Matrix.fromArray(targets, Matrix.COLUMN);
         let outputLayer = this.layers[this.layers.length-1];
 
-        let dErrorActivationMatrix = this.dErrorFn(outputLayer.neurons, targetsMatrix)
+        let dErrorActivation = this.dErrorFn(outputLayer.neurons, targetsMatrix)
         for (let i = this.layers.length-1; i > 0; i--) {
 
             let currLayer = this.layers[i];
-            let nextLayer = this.layers[i-1];
+            let prevLayer = this.layers[i-1];
 
-            let {
-                dErrorWeightMatrix,
-                dErrorBiasMatrix,
-                dErrorPrevActivationMatrix
-            } = currLayer.gDFn(currLayer.neurons, nextLayer.neurons, currLayer.biases, currLayer.weights, 
-                               targetsMatrix, dErrorActivationMatrix, currLayer.dActivationFn);
+            if (currLayer instanceof FullyConnectedLayer) {
 
-            // subtract the calculated derivatives
-            currLayer.weights.sub(Matrix.mult(dErrorWeightMatrix, this.learningRate));
-            currLayer.biases.sub(Matrix.mult(dErrorBiasMatrix, this.learningRate));
+                let {
+                    dErrorWeightMatrix,
+                    dErrorBiasMatrix,
+                    dErrorPrevActivationMatrix
+                } = currLayer.gDFn(currLayer, prevLayer, targetsMatrix, dErrorActivationMatrix, currLayer.dActivationFn);
+    
+                // subtract the calculated derivatives
+                currLayer.weights.sub(Matrix.mult(dErrorWeightMatrix, this.learningRate));
+                currLayer.biases.sub(Matrix.mult(dErrorBiasMatrix, this.learningRate));
+    
+                dErrorActivation = dErrorPrevActivationMatrix;  // to be used for next layer
 
-            dErrorActivationMatrix = dErrorPrevActivationMatrix;  // to be used for next layer
+            } else if (currLayer instanceof PoolingLayer) {
+
+
+                let {
+                    dErrorPrevActivationMatrices
+                } = poolingGD(currLayer, prevLayer, dErrorActivation);
+
+                dErrorActivation = dErrorPrevActivationMatrices;
+
+            } else if (currLayer instanceof ConvolutionalLayer) {
+
+                let {
+                    dErrorPrevActivationMatrices,
+                    dErrorFilterMatrices
+                } = convolutionalGD(currLayer, prevLayer, dErrorActivation);
+
+                for (let i = 0; i < dErrorFilterMatrices.length; i++) {
+                    currLayer.filters[i].sub(Matrix.mult(dErrorFilterMatrices[i], this.learningRate));
+                }
+
+                dErrorActivation = dErrorPrevActivationMatrices;
+
+            } else {
+
+                throw new Error("invalid layer type");
+
+            }
+
+            
 
         }
 
