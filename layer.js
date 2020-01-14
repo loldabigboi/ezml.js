@@ -108,14 +108,13 @@ class ConvolutionalLayer {
     processInputs(inputs) {
 
         let outputIndex = 0;
-        for (let i = 0; i < inputs.length; i++) {  // loop through each input 'image'
+        for (let filter of this.filters) {  // loop through each input 'image'
+
+            let rowOffset = (filter.rows - 1)/2,
+                colOffset = (filter.cols - 1)/2;
             
-            let input = inputs[i];
-            for (let filter of this.filters) {
-
-                let rowOffset = (filter.rows - 1)/2,
-                    colOffset = (filter.cols - 1)/2;
-
+            for (let i = 0; i < inputs.length; i++) {
+                let input = inputs[i];
                 let outputMatrix = this.outputs[outputIndex];
 
                 for (let row = 0; row < this.outputDimensions[0]; row++) {
