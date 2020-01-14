@@ -154,7 +154,6 @@ class NeuralNetwork {
                     // need to flatten inputs
                     let newInputs = [];
                     for (let m of inputs) {
-                        console.log(m);
                         newInputs = newInputs.concat(m.to1DArray());
                     }
 
@@ -185,6 +184,7 @@ class NeuralNetwork {
         let dErrorActivation = this.dErrorFn(outputLayer.neurons, targetsMatrix)
         for (let i = this.layers.length-1; i > 0; i--) {
 
+            console.log(dErrorActivation);
             let currLayer = this.layers[i];
             let prevLayer = this.layers[i-1];
 
@@ -194,7 +194,7 @@ class NeuralNetwork {
                     dErrorWeightMatrix,
                     dErrorBiasMatrix,
                     dErrorPrevActivationMatrix
-                } = currLayer.gDFn(currLayer, prevLayer, targetsMatrix, dErrorActivationMatrix, currLayer.dActivationFn);
+                } = currLayer.gDFn(currLayer, prevLayer, targetsMatrix, dErrorActivation, currLayer.dActivationFn);
     
                 // subtract the calculated derivatives
                 currLayer.weights.sub(Matrix.mult(dErrorWeightMatrix, this.learningRate));
@@ -204,11 +204,7 @@ class NeuralNetwork {
 
             } else if (currLayer instanceof PoolingLayer) {
 
-
-                let {
-                    dErrorPrevActivationMatrices
-                } = poolingGD(currLayer, prevLayer, dErrorActivation);
-
+                let dErrorPrevActivationMatrices = poolingGD(currLayer, prevLayer, dErrorActivation);
                 dErrorActivation = dErrorPrevActivationMatrices;
 
             } else if (currLayer instanceof ConvolutionalLayer) {
@@ -258,8 +254,8 @@ class NeuralNetwork {
         if (!this.layers) {
             throw new Error("compile() must be called before predictions can be made.");
         }
+
         this._feedForward(inputs);
-        console.log(this.layers[this.layers.length-1]);
         return Matrix.to1DArray(this.layers[this.layers.length-1].neurons);
 
     }

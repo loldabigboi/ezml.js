@@ -126,7 +126,7 @@ function convolutionalGD(currLayer, prevLayer, dErrorActivationMatrices) {
     let errorMatrices;
 
     if (!Array.isArray(dErrorActivationMatrices)) {
-        // convert 1D errors to 3D representation
+        // convert 1D errors to 3D representation   
         for (let depth = 0; depth < currLayer.outputDimensions[2]; depth++) {
 
             let errorMatrix = new Matrix(currLayer.outputDimensions[0],
@@ -136,7 +136,7 @@ function convolutionalGD(currLayer, prevLayer, dErrorActivationMatrices) {
             for (let i = iStart; i <iStart + outputRows*outputCols; i++) {
                 let row = Math.floor(i / outputCols),
                     col = i % outputCols;
-                errorMatrix.set(row, col, dErrorActivationMatrix.get(i, 0));
+                errorMatrix.set(row, col, dErrorActivationMatrices.get(i, 0));
             }
             errorMatrices.push(errorMatrix);
 
@@ -164,11 +164,11 @@ function convolutionalGD(currLayer, prevLayer, dErrorActivationMatrices) {
         for (let i = 0; i < currLayer.inputDimensions[2]; i++) {  // loop through each input matrix
             
             let inputMatrix = prevLayer.outputs[i];
-            let dErrorActivationMatrix = errorMatrices[outputOffset + i];
+            let dErrorActivationMatrix = errorMatrices[outputIndex];
             let dErrorPrevActivationMatrix = dErrorPrevActivationMatrices[i];
 
-            for (let row = 0; row < this.outputDimensions[0]; row++) {
-                for (let col = 0; col < this.outputDimensions[1]; col++) {
+            for (let row = 0; row < currLayer.outputDimensions[0]; row++) {
+                for (let col = 0; col < currLayer.outputDimensions[1]; col++) {
 
                     let inputRow = row + rowOffset,
                         inputCol = col + colOffset;
@@ -225,9 +225,9 @@ function poolingGD(currLayer, prevLayer, dErrorActivationMatrices) {
     let outputRows = currLayer.outputDimensions[0],
         outputCols = currLayer.outputDimensions[1];
 
-    let errorMatrices;
+    let errorMatrices = [];
 
-    if (!Array.isArray(dErrorPrevActivationMatrices)) {
+    if (!Array.isArray(dErrorActivationMatrices)) {
         // convert 1D errors to 3D representation
         for (let depth = 0; depth < currLayer.outputDimensions[2]; depth++) {
 
@@ -236,9 +236,11 @@ function poolingGD(currLayer, prevLayer, dErrorActivationMatrices) {
             
             let iStart = depth*outputRows*outputCols;
             for (let i = iStart; i <iStart + outputRows*outputCols; i++) {
-                let row = Math.floor(i / outputCols),
+                let row = Math.floor((i - iStart) / outputCols),
                     col = i % outputCols;
-                errorMatrix.set(row, col, dErrorActivationMatrix.get(i, 0));
+                    errorMatrix.set(row, col, dErrorActivationMatrices.get(i, 0));
+                
+                
             }
             errorMatrices.push(errorMatrix);
 
@@ -252,7 +254,7 @@ function poolingGD(currLayer, prevLayer, dErrorActivationMatrices) {
         filterHeight = currLayer.filterDimensions[1];
 
     let dErrorPrevActivationMatrices = [];
-    for (let i = 0; i < currLayer.inputDimension[2]; i++) {
+    for (let i = 0; i < currLayer.inputDimensions[2]; i++) {
 
         let dErrorPrevActivationMatrix = new Matrix(currLayer.contributionMatrices[i]);
         let errorMatrix = errorMatrices[i];
@@ -294,17 +296,16 @@ function oneToOneActivationGD(currLayer, prevLayer, targets, dErrorActivationMat
     if (prevLayer instanceof FullyConnectedLayer) {
         prevNeuronsMatrix = prevLayer.neurons;
     } else { // flatten all prev. outputs into a column vector
-        prevNeurons = [];
+        let prevNeurons = [];
         for (let input of prevLayer.outputs) {
             prevNeurons = prevNeurons.concat(input.to1DArray());
         }
         prevNeuronsMatrix = Matrix.fromArray(prevNeurons, Matrix.COLUMN);
     }
-
     let dActivationZMatrix = dActivationFn(currLayer.neurons);
 
     // calculate dErrorWeightMatrix (how each weight affects error)
-    let dErrorWeightMatrix = Matrix.map(weights, (val, row, col) => {
+    let dErrorWeightMatrix = Matrix.map(currLayer.weights, (val, row, col) => {
 
         let dZWeight        = prevNeuronsMatrix.get(col, 0);
         let dActivationZ    = dActivationZMatrix.get(row, 0);
@@ -316,7 +317,7 @@ function oneToOneActivationGD(currLayer, prevLayer, targets, dErrorActivationMat
     // calculate dErrorBiasMatrix (how each bias affects error)
     // neuronsMatrix will have same dimensions as the bias matrix, so no need
     // to create a bias matrix
-    let dErrorBiasMatrix = Matrix.map(neuronsMatrix, (val, row, col) => {
+    let dErrorBiasMatrix = Matrix.map(currLayer.neurons, (val, row, col) => {
         
         let dZBias = 1;
         let dActivationZ = dActivationZMatrix.get(row, 0);
@@ -329,8 +330,8 @@ function oneToOneActivationGD(currLayer, prevLayer, targets, dErrorActivationMat
     let dErrorPrevActivationMatrix = Matrix.map(prevNeuronsMatrix, (val, row, col) => {
         
         let total = 0;
-        for (let i = 0; i < neuronsMatrix.rows; i++) {  // i indexes all the weights for this prev. neuron
-            let dZPrevActivation = weights.get(i, row);
+        for (let i = 0; i < currLayer.neurons.rows; i++) {  // i indexes all the weights for this prev. neuron
+            let dZPrevActivation = currLayer.weights.get(i, row);
             let dActivationZ = dActivationZMatrix.get(i, 0);
             let dErrorActivation = dErrorActivationMatrix.get(i, 0);
             total += dZPrevActivation * dActivationZ * dErrorActivation;

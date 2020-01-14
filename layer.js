@@ -224,9 +224,11 @@ class PoolingLayer {
                             }
                         }
 
+                        newVal = val;
+
                     } else if (this.type === LayerConstants.AVG_POOLING) {
 
-                        let sum;
+                        let sum = 0;
                         let n = this.filterDimensions[0] * this.filterDimensions[1];
                         for (let filterRow = 0; filterRow < this.filterDimensions[0]; filterRow++) {
                             for (let filterCol = 0; filterCol < this.filterDimensions[1]; filterCol++) {
@@ -252,9 +254,9 @@ class PoolingLayer {
 
                         newVal = sum / n;
 
-                     } else {
-                         throw new Error("Invalid pooling type.");
-                     }
+                    } else {
+                        throw new Error("Invalid pooling type.");
+                    }
                          
                      this.outputs[i].set(row, col, newVal);
  
