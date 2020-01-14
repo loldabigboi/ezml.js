@@ -109,6 +109,109 @@ function dCrossEntropy(neuronsMatrix, targetsMatrix) {
 }
 
 /**
+ * Gradient descent algorithm for convolutional layers
+ * @param {PoolingLayer | ConvolutionalLayer} currLayer 
+ * @param {PoolingLayer | ConvolutionalLayer} prevLayer 
+ * @param {Matrix | Matrix[]} dErrorActivationMatrices A Nx1 matrix (passed from fully-connected layer) 
+ * or array of 2D error matrices (passed from conv/pool layer)
+ */
+function convolutionalGD(currLayer, prevLayer, dErrorActivationMatrices) {
+
+    // prevLayer must, according to the compile() method, be a pooling
+    // or convolutional layer
+
+    let outputRows = currLayer.outputDimensions[0],
+        outputCols = currLayer.outputDimensions[1];
+
+    let errorMatrices;
+
+    if (!Array.isArray(dErrorActivationMatrices)) {
+        // convert 1D errors to 3D representation
+        for (let depth = 0; depth < currLayer.outputDimensions[2]; depth++) {
+
+            let errorMatrix = new Matrix(currLayer.outputDimensions[0],
+                                        currLayer.outputDimensions[1]);
+            
+            let iStart = depth*outputRows*outputCols;
+            for (let i = iStart; i <iStart + outputRows*outputCols; i++) {
+                let row = Math.floor(i / outputCols),
+                    col = i % outputCols;
+                errorMatrix.set(row, col, dErrorActivationMatrix.get(i, 0));
+            }
+            errorMatrices.push(errorMatrix);
+
+        }
+    } else {
+        errorMatrices = dErrorActivationMatrices;
+    }
+
+    let dErrorPrevActivationMatrices = [];
+    for (let i = 0; i < currLayer.inputDimensions[2]; i++) {
+        dErrorPrevActivationMatrices.push(new Matrix(currLayer.inputDimensions[0], currLayer.inputDimensions[1]));
+    }
+
+    let dErrorFilterMatrices = [];
+
+    let outputIndex = 0;
+    for (let filter of currLayer.filters) {  // loop through all filters
+
+        let rowOffset = (filter.rows - 1)/2,
+            colOffset = (filter.cols - 1)/2;
+
+        let dErrorFilterMatrix = new Matrix(filter.rows, filter.cols);
+        let n = filter.rows * filter.cols;
+        
+        for (let i = 0; i < currLayer.inputDimensions[2]; i++) {  // loop through each input matrix
+            
+            let inputMatrix = prevLayer.outputs[i];
+            let dErrorActivationMatrix = errorMatrices[outputOffset + i];
+            let dErrorPrevActivationMatrix = dErrorPrevActivationMatrices[i];
+
+            for (let row = 0; row < this.outputDimensions[0]; row++) {
+                for (let col = 0; col < this.outputDimensions[1]; col++) {
+
+                    let inputRow = row + rowOffset,
+                        inputCol = col + colOffset;
+
+                    for (let filterRow = -rowOffset; filterRow     <= rowOffset; filterRow++) {
+                        for (let filterCol = -colOffset; filterCol <= colOffset; filterCol++) {
+                            
+                            let actualRow = inputRow + filterRow,
+                                actualCol = inputCol + filterCol;
+
+                            let dErrorActivation = dErrorActivationMatrix.get(row, col);
+                            let dActivationFilter = inputMatrix.get(actualRow, actualCol) / n;
+                            let dErrorFilter = dErrorFilterMatrix.get(rowOffset + filterRow, colOffset + filterCol) +  
+                                               dErrorActivation * dActivationFilter;
+
+                            let dActivationPrevActivation = filter.get(rowOffset + filterRow, colOffset + filterCol);
+                            let dErrorPrevActivation = dErrorPrevActivationMatrix.get(inputRow, inputCol) + 
+                                                       dErrorActivation * dActivationPrevActivation;
+
+                             dErrorFilterMatrix.set(rowOffset + filterRow, colOffset + filterCol, dErrorFilter); 
+                             dErrorPrevActivationMatrix.set(inputRow, inputCol, dErrorPrevActivation);    
+
+                        }
+                    }
+
+                }
+            }
+
+            outputIndex++;
+
+        }
+
+        dErrorFilterMatrices.push(dErrorFilterMatrix);
+
+    }
+
+    return {
+        dErrorFilterMatrices,
+        dErrorPrevActivationMatrices
+    }
+
+}
+/**
  * Gradient descent algorithm for pooling layers
  * @param {PoolingLayer | ConvolutionalLayer} currLayer 
  * @param {PoolingLayer | ConvolutionalLayer} prevLayer 
