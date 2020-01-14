@@ -108,7 +108,7 @@ class ConvolutionalLayer {
     processInputs(inputs) {
 
         let outputIndex = 0;
-        for (let filter of this.filters) {  // loop through each input 'image'
+        for (let filter of this.filters) {
 
             let rowOffset = (filter.rows - 1)/2,
                 colOffset = (filter.cols - 1)/2;
