@@ -271,21 +271,51 @@ class NeuralNetwork {
     static fromJSON(jsonString) {
 
         let obj = JSON.parse(jsonString);
-
-        let weights = [];
         console.log(obj);
-        for (let weightsObj of obj.weights) {
-            let weightsMatrix = new Matrix(weightsObj.rows, weightsObj.cols);
-            weightsMatrix.values = weightsObj.values;
-            weights.push(weightsMatrix);
-        }
 
-        // can simply pass 'obj' for the options parameter as it will have all fields necessary
-        let neuralNetwork = new NeuralNetwork([], obj);
-        
-        neuralNetwork.neurons = obj.neurons;
-        neuralNetwork.biases  = obj.biases;
-        neuralNetwork.weights = weights;
+        let neuralNetwork = new NeuralNetwork({
+            learningRate: obj.learningRate,
+            errorType: obj.errorType
+        });
+        neuralNetwork.layerBlueprints = obj.layerBlueprints;
+        neuralNetwork.compile();
+
+        for (let i = 0; i < obj.layers.length; i++) {
+
+            let layer = neuralNetwork.layers[i];
+            let objLayer = obj.layers[i];
+            let layerType = neuralNetwork.layerBlueprints[i].type;
+            if (layerType === LayerConstants.FULLY_CONNECTED) {
+
+                layer.neurons.values = objLayer.neurons.values;
+                layer.neurons.rows   = objLayer.neurons.rows;
+                layer.neurons.cols   = objLayer.neurons.cols;
+
+                layer.biases.values = objLayer.biases.values;
+                layer.biases.rows   = objLayer.biases.rows;
+                layer.biases.cols   = objLayer.biases.cols;
+
+                layer.weights.values = objLayer.weights.values;
+                layer.weights.rows   = objLayer.weights.rows;
+                layer.weights.cols   = objLayer.weights.cols;
+
+            } else if (layerType === LayerConstants.CONVOLUTIONAL) {
+
+                let objFilters = objLayer.filters;
+                for (let i_ = 0; i_ < layer.filters.length; i_++) {
+
+                    let filter = layer.filters[i_];
+                    let objFilter = objFilters[i_];
+
+                    filter.values = objFilter.values;
+                    filter.rows  = objFilter.rows;
+                    filter.cols  = objFilter.cols;
+
+                }
+
+            }
+
+        }
 
         return neuralNetwork;
 

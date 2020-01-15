@@ -204,6 +204,25 @@ function convolutionalGD(currLayer, prevLayer, dErrorActivationMatrices) {
         dErrorFilterMatrices.push(dErrorFilterMatrix);
 
     }
+    
+    if (currLayer.paddingType === LayerConstants.SAME_PADDING) {  // reverse padding applied to inputs
+        
+        let rowOffset = (currLayer.filterDimensions[0] - 1) / 2,
+            colOffset = (currLayer.filterDimensions[0] - 1) / 2
+
+        for (let i = 0; i < dErrorActivationMatrices.length; i++) {
+            let newDErrorActivationMatrix = new Matrix(currLayer.inputDimensions[0], currLayer.inputDimensions[1]);
+            for (let row = 0; row < newDErrorActivationMatrix.rows; row++) {
+                for (let col = 0; col < newDErrorActivationMatrix.cols; col++) {
+                    let val = dErrorActivationMatrices[i].get(row + rowOffset, col + colOffset);
+                    newDErrorActivationMatrix.set(row, col, val);
+                }
+            }
+            dErrorActivationMatrices[i] = newDErrorActivationMatrix;
+        }
+
+    }
+    
 
     return {
         dErrorFilterMatrices,

@@ -72,13 +72,17 @@ class ConvolutionalLayer {
             throw new Error("Must have one or more filters.");
         }
 
+        this.paddingType = (options.paddingType) ? options.paddingtype : LayerConstants.VALID_PADDING;
+
         this.outputDimensions = inputDimensions.slice();
         for (let i = 0; i < 2; i++) {
             let dimension = this.filterDimensions[i];
             if (dimension % 2 == 0 || dimension < 1) {
                 throw new Error("Filter dimensions must be odd and > 0.");
             }
-            this.outputDimensions[i] -= dimension-1; // valid padding
+            if (this.paddingType === LayerConstants.VALID_PADDING) {
+                this.outputDimensions[i] -= dimension-1;
+            }
         }
         this.outputDimensions[2] *= this.numFilters;  // each input 'image' is filtered once by each filter
 
@@ -98,6 +102,7 @@ class ConvolutionalLayer {
         for (let i = 0; i < this.outputDimensions[2]; i++) {
             this.outputs.push(new Matrix(this.outputDimensions[0], this.outputDimensions[1]));
         }
+
         
     }
 
@@ -114,7 +119,20 @@ class ConvolutionalLayer {
                 colOffset = (filter.cols - 1)/2;
             
             for (let i = 0; i < inputs.length; i++) {
+
                 let input = inputs[i];
+                if (this.paddingType === LayerConstants.SAME_PADDING) {
+
+                    // pad input with zeros
+                    let newInput = new Matrix(input.rows + rowOffset*2, input.cols + colOffset*2);
+                    for (let row = rowOffset; row < input.rows; row++) {
+                        for (let col = colOffset; col < input.cols; col++) {
+                            newInput.set(row, col, input.get(row - rowOffset, col - colOffset));
+                        }
+                    }
+                    input = newInput;
+
+                }
                 let outputMatrix = this.outputs[outputIndex];
 
                 for (let row = 0; row < this.outputDimensions[0]; row++) {
@@ -274,6 +292,10 @@ class LayerConstants {}
 LayerConstants.MAX_POOLING = "max-pooling";
 LayerConstants.MIN_POOLING = "min-pooling";
 LayerConstants.AVG_POOLING = "avg-pooling";
+
+// padding type constants (for conv. layers)
+LayerConstants.VALID_PADDING = "valid";
+LayerConstants.SAME_PADDING = "same";
 
 // layer type constants
 LayerConstants.FULLY_CONNECTED = "fully-connected";
