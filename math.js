@@ -2,52 +2,87 @@
 
 /** SIGMOID */
 function sigmoid(values) {
-    return Matrix.map(values, (x) => {
-        return 1 / (1 + Math.exp(-x));
-    });
+
+    if (values instanceof Matrix) {
+        return Matrix.map(values, (x) => {
+            return 1 / (1 + Math.exp(-x));
+        });
+    } else {  // single value
+        return 1 / (1 + Math.exp(-values));
+    }
+    
 }
 
 function dSigmoid(activations) {
     // y is the result of sigmoid(x)
-    return Matrix.map(activations, (y) => {
-        return y * (1 - y);
-    });
+    if (values instanceof Matrix) {
+        return Matrix.map(activations, (y) => {
+            return y * (1 - y);
+        });
+    } else {  // single value
+        return activations * (1 - activations);
+    }
+    
+    
 }
 
 /** TANH */
 function tanh(values) {
 
-    return Matrix.map(values, (x) => {
-        let exp = Math.exp(2*x);
+    if (values instanceof Matrix) {
+        return Matrix.map(values, (x) => {
+            let exp = Math.exp(2*x);
+            if (exp == Infinity) {  // need this check otherwise we get NaN
+                return 1;  // approx. equal to 1.
+            }
+            return (exp - 1) / (exp + 1);
+        });
+    } else {
+        let exp = Math.exp(2*values);
         if (exp == Infinity) {  // need this check otherwise we get NaN
             return 1;  // approx. equal to 1.
         }
-        return (Math.exp(2*x) - 1) / (Math.exp(2*x) + 1);
-    });
+        return (exp - 1) / (exp + 1);
+    }
+    
 
 }
 
 function dTanh(activations) {
-    return Matrix.map((activations), (y) => {
-        return 1 - Math.pow(y, 2);
-    });
+    if (activations instanceof Matrix) {
+        return Matrix.map((activations), (y) => {
+            return 1 - Math.pow(y, 2);
+        });
+    } else {
+        return 1 - Math.pow(activations, 2);
+    }
+    
 }
 
 /** RELU */
 function relu(values) {
-    return Matrix.map(values, (x) => {
-        return Math.max(0, x);
-    })
+    if (values instanceof Matrix) {
+        return Matrix.map(values, (x) => {
+            return Math.max(0, x);
+        });
+    } else {
+        return Math.max(0, values);
+    }
+    
 }
 
 function dRelu(activations) {
-    return Matrix.map(activations, (y) => {
-        if (y == 0) {
-            return 0;
-        } else {
-            return 1;
-        }
-    });
+    if (activations instanceof Matrix) {
+        return Matrix.map(activations, (y) => {
+            if (y == 0) {
+                return 0;
+            } else {
+                return 1;
+            }
+        });
+    } else {
+        return (y == 0) ? 0 : 1;
+    }
 }
 
 /** SOFTMAX */
