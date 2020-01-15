@@ -123,9 +123,9 @@ function convolutionalGD(currLayer, prevLayer, dErrorActivationMatrices) {
     let outputRows = currLayer.outputDimensions[0],
         outputCols = currLayer.outputDimensions[1];
 
-    let errorMatrices;
+    let errorMatrices = [];
 
-    if (prevLayer instanceof FullyConnectedLayer) {
+    if (dErrorActivationMatrices instanceof Matrix) {
         // convert 1D errors to 3D representation   
         for (let depth = 0; depth < currLayer.outputDimensions[2]; depth++) {
 
@@ -134,7 +134,7 @@ function convolutionalGD(currLayer, prevLayer, dErrorActivationMatrices) {
             
             let iStart = depth*outputRows*outputCols;
             for (let i = iStart; i <iStart + outputRows*outputCols; i++) {
-                let row = Math.floor(i / outputCols),
+                let row = Math.floor((i - iStart) / outputCols),
                     col = i % outputCols;
                 errorMatrix.set(row, col, dErrorActivationMatrices.get(i, 0));
             }
@@ -227,7 +227,7 @@ function poolingGD(currLayer, prevLayer, dErrorActivationMatrices) {
 
     let errorMatrices = [];
 
-    if (prevLayer instanceof FullyConnectedLayer) {
+    if (dErrorActivationMatrices instanceof Matrix) {
         // convert 1D errors to 3D representation
         for (let depth = 0; depth < currLayer.outputDimensions[2]; depth++) {
 
