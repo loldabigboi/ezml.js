@@ -208,7 +208,6 @@ class Matrix {
 
     /**
      * Returns a 1D array representation of this matrix (flattens it).
-     * @param {*} m 
      */
     to1DArray() {
 

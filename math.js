@@ -125,7 +125,7 @@ function convolutionalGD(currLayer, prevLayer, dErrorActivationMatrices) {
 
     let errorMatrices;
 
-    if (!Array.isArray(dErrorActivationMatrices)) {
+    if (prevLayer instanceof FullyConnectedLayer) {
         // convert 1D errors to 3D representation   
         for (let depth = 0; depth < currLayer.outputDimensions[2]; depth++) {
 
@@ -227,7 +227,7 @@ function poolingGD(currLayer, prevLayer, dErrorActivationMatrices) {
 
     let errorMatrices = [];
 
-    if (!Array.isArray(dErrorActivationMatrices)) {
+    if (prevLayer instanceof FullyConnectedLayer) {
         // convert 1D errors to 3D representation
         for (let depth = 0; depth < currLayer.outputDimensions[2]; depth++) {
 
@@ -389,7 +389,7 @@ function crossEntropySoftmaxGD(currLayer, prevLayer, targets, dErrorActivationMa
     });    
 
     // calculate dErrorWeightMatrix (how each weight affects error)
-    let dErrorWeightMatrix = Matrix.map(weights, (val, row, col) => {
+    let dErrorWeightMatrix = Matrix.map(currLayer.weights, (val, row, col) => {
         
         let dErrorZ = dErrorZMatrix.get(row, 0);
         let dZWeight = prevNeuronsMatrix.get(col, 0);
@@ -407,7 +407,7 @@ function crossEntropySoftmaxGD(currLayer, prevLayer, targets, dErrorActivationMa
         
         let total = 0;
         for (let i = 0; i < neuronsMatrix.rows; i++) {  // i indexes all the weights for this prev. neuron
-            let dZPrevActivation = weights.get(i, row);
+            let dZPrevActivation = currLayer.weights.get(i, row);
             let dErrorZ = dErrorZMatrix.get(i, 0);
             total += dZPrevActivation * dErrorZ;
         }
