@@ -72,7 +72,7 @@ class ConvolutionalLayer {
             throw new Error("Must have one or more filters.");
         }
 
-        this.paddingType = (options.paddingType) ? options.paddingtype : LayerConstants.VALID_PADDING;
+        this.paddingType = (options.paddingType) ? options.paddingType : LayerConstants.VALID_PADDING;
 
         this.outputDimensions = inputDimensions.slice();
         for (let i = 0; i < 2; i++) {
