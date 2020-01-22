@@ -15,7 +15,7 @@ function sigmoid(values) {
 
 function dSigmoid(activations) {
     // y is the result of sigmoid(x)
-    if (values instanceof Matrix) {
+    if (activations instanceof Matrix) {
         return Matrix.map(activations, (y) => {
             return y * (1 - y);
         });
@@ -146,14 +146,11 @@ function dCrossEntropy(neuronsMatrix, targetsMatrix) {
 /**
  * Gradient descent algorithm for convolutional layers
  * @param {PoolingLayer | ConvolutionalLayer} currLayer 
- * @param {PoolingLayer | ConvolutionalLayer} prevLayer 
+ * @param {Matrix[]} prevActivations 
  * @param {Matrix | Matrix[]} dErrorActivationMatrices A Nx1 matrix (passed from fully-connected layer) 
  * or array of 2D error matrices (passed from conv/pool layer)
  */
-function convolutionalGD(currLayer, prevLayer, dErrorActivationMatrices) {
-
-    // prevLayer must, according to the compile() method, be a pooling
-    // or convolutional layer
+function convolutionalGD(currLayer, prevActivations, dErrorActivationMatrices) {
 
     let outputRows = currLayer.outputDimensions[0],
         outputCols = currLayer.outputDimensions[1];
@@ -198,7 +195,7 @@ function convolutionalGD(currLayer, prevLayer, dErrorActivationMatrices) {
         
         for (let i = 0; i < currLayer.inputDimensions[2]; i++) {  // loop through each input matrix
             
-            let inputMatrix = prevLayer.outputs[i];
+            let inputMatrix = prevActivations[i];
             let dErrorActivationMatrix = errorMatrices[outputIndex];
             let dErrorPrevActivationMatrix = dErrorPrevActivationMatrices[i];
 
@@ -219,12 +216,12 @@ function convolutionalGD(currLayer, prevLayer, dErrorActivationMatrices) {
                             let dErrorFilter = dErrorFilterMatrix.get(rowOffset + filterRow, colOffset + filterCol) +  
                                                dErrorActivation * dActivationFilter;
 
-                            let dActivationPrevActivation = filter.get(rowOffset + filterRow, colOffset + filterCol);
+                            let dActivationPrevActivation = filter.get(rowOffset + filterRow, colOffset + filterCol) / n;
                             let dErrorPrevActivation = dErrorPrevActivationMatrix.get(inputRow, inputCol) + 
                                                        dErrorActivation * dActivationPrevActivation;
-
-                             dErrorFilterMatrix.set(rowOffset + filterRow, colOffset + filterCol, dErrorFilter); 
-                             dErrorPrevActivationMatrix.set(inputRow, inputCol, dErrorPrevActivation);    
+                                
+                            dErrorFilterMatrix.set(rowOffset + filterRow, colOffset + filterCol, dErrorFilter); 
+                            dErrorPrevActivationMatrix.set(inputRow, inputCol, dErrorPrevActivation);    
 
                         }
                     }
@@ -268,13 +265,10 @@ function convolutionalGD(currLayer, prevLayer, dErrorActivationMatrices) {
 /**
  * Gradient descent algorithm for pooling layers
  * @param {PoolingLayer | ConvolutionalLayer} currLayer 
- * @param {PoolingLayer | ConvolutionalLayer} prevLayer 
+ * @param {Matrix[]} prevActivations 
  * @param {Matrix | Matrix[]} dErrorActivationMatrix A Nx1 matrix or array of 2D error matrices (passed from conv/pool layer)
  */
-function poolingGD(currLayer, prevLayer, dErrorActivationMatrices) {
-
-    // prevLayer must, according to the compile() method, be a pooling
-    // or convolutional layer
+function poolingGD(currLayer, prevActivations, dErrorActivationMatrices) {
 
     let outputRows = currLayer.outputDimensions[0],
         outputCols = currLayer.outputDimensions[1];
@@ -292,9 +286,7 @@ function poolingGD(currLayer, prevLayer, dErrorActivationMatrices) {
             for (let i = iStart; i <iStart + outputRows*outputCols; i++) {
                 let row = Math.floor((i - iStart) / outputCols),
                     col = i % outputCols;
-                    errorMatrix.set(row, col, dErrorActivationMatrices.get(i, 0));
-                
-                
+                errorMatrix.set(row, col, dErrorActivationMatrices.get(i, 0));
             }
             errorMatrices.push(errorMatrix);
 
@@ -344,15 +336,15 @@ function poolingGD(currLayer, prevLayer, dErrorActivationMatrices) {
 // Gradient descent for squared error with 1:1 activation function
 // (i.e. each activation is only dependent upon the single corresponding logit)
 // e.g. Sigmoid, Tanh or ReLU
-function oneToOneActivationGD(currLayer, prevLayer, targets, dErrorActivationMatrix, dActivationFn) {
+function oneToOneActivationGD(currLayer, prevActivations, targets, dErrorActivationMatrix, dActivationFn) {
 
     let prevNeuronsMatrix;
-    if (prevLayer instanceof FullyConnectedLayer) {
-        prevNeuronsMatrix = prevLayer.neurons;
+    if (prevActivations instanceof Matrix) {
+        prevNeuronsMatrix = prevActivations;
     } else { // flatten all prev. outputs into a column vector
         let prevNeurons = [];
-        for (let input of prevLayer.outputs) {
-            prevNeurons = prevNeurons.concat(input.to1DArray());
+        for (let matrix of prevActivations) {
+            prevNeurons = prevNeurons.concat(matrix.to1DArray());
         }
         prevNeuronsMatrix = Matrix.fromArray(prevNeurons, Matrix.COLUMN);
     }
@@ -403,19 +395,19 @@ function oneToOneActivationGD(currLayer, prevLayer, targets, dErrorActivationMat
 }
 
 // Gradient descent iteration for cross entropy error with softmax activation
-function crossEntropySoftmaxGD(currLayer, prevLayer, targets, dErrorActivationMatrix) {
+function crossEntropySoftmaxGD(currLayer, prevActivations, targets, dErrorActivationMatrix) {
         
     // variable naming: dXY means the partial derivative of X with respect to Y
     //                  dXYMatrix means a matrix of values corresponding to the above
     //                  dXYArray means an array of values corresponding to the above
 
     let prevNeuronsMatrix;
-    if (prevLayer instanceof FullyConnectedLayer) {
-        prevNeuronsMatrix = prevLayer.neurons;
+    if (prevActivations instanceof Matrix) {
+        prevNeuronsMatrix = prevActivations;
     } else { // flatten all prev. outputs into a column vector
         prevNeurons = [];
-        for (let input of prevLayer.outputs) {
-            prevNeurons = prevNeurons.concat(input.to1DArray());
+        for (let matrix of prevActivations) {
+            prevNeurons = prevNeurons.concat(matrix.to1DArray());
         }
         prevNeuronsMatrix = Matrix.fromArray(prevNeurons, Matrix.COLUMN);
     }
@@ -436,6 +428,10 @@ function crossEntropySoftmaxGD(currLayer, prevLayer, targets, dErrorActivationMa
             let dErrorActivation = dErrorActivationMatrix.get(j, 0);
             let dActivationZ = dActivationZMatrix.get(i, j);
             sum += dErrorActivation * dActivationZ;
+            if (isNaN(sum)) {
+                console.log(neuralNetwork);
+                throw new Error();
+            }
         }
 
         return sum;

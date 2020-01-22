@@ -103,6 +103,14 @@ class ConvolutionalLayer {
             this.outputs.push(new Matrix(this.outputDimensions[0], this.outputDimensions[1]));
         }
 
+        this.activationType = (options.activationType) ? options.activationType : LayerConstants.RELU;
+        if (this.activationType === LayerConstants.RELU) {
+            this.activationFn = relu;
+        } else {
+            throw new Error("relu or ur dumb bro");
+        }
+
+        this.activationPosition = (options.activationPosition) ? options.activationPosition : LayerConstants.BEFORE;
         
     }
 
@@ -117,6 +125,8 @@ class ConvolutionalLayer {
 
             let rowOffset = (filter.rows - 1)/2,
                 colOffset = (filter.cols - 1)/2;
+
+            let n = filter.rows * filter.cols;
             
             for (let i = 0; i < inputs.length; i++) {
 
@@ -138,18 +148,26 @@ class ConvolutionalLayer {
                 for (let row = 0; row < this.outputDimensions[0]; row++) {
                     for (let col = 0; col < this.outputDimensions[1]; col++) {
 
+                        let newVal = 0;
                         for (let filterRow = -rowOffset; filterRow     <= rowOffset; filterRow++) {
                             for (let filterCol = -colOffset; filterCol <= colOffset; filterCol++) {
                                 
                                 let actualRow = row + rowOffset + filterRow,
                                     actualCol = col + colOffset + filterCol;
+                                
+                                let inputVal = (this.activationPosition === LayerConstants.BEFORE) ? 
+                                                this.activationFn(input.get(actualRow, actualCol)) :
+                                                input.get(actualRow, actualCol);
 
-                                let newVal = input.get(actualRow, actualCol) * 
-                                             filter.get(filterRow + rowOffset, filterCol + colOffset);
-                                outputMatrix.set(row, col, newVal);                  
+                                newVal += inputVal * filter.get(filterRow + rowOffset, filterCol + colOffset);                 
 
                             }
                         }
+                        newVal /= n;
+                        if (this.activationPosition === LayerConstants.AFTER) {
+                            newVal = this.activationFn(newVal);
+                        }
+                        outputMatrix.set(row, col, newVal); 
 
                     }
                 }
@@ -287,6 +305,10 @@ class PoolingLayer {
 }
 
 class LayerConstants {}
+
+// activation timing constants (for conv. layer)
+LayerConstants.BEFORE = "before";
+LayerConstants.AFTER  = "after";
 
 // pooling type constants
 LayerConstants.MAX_POOLING = "max-pooling";

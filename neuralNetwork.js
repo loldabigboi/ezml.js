@@ -176,19 +176,29 @@ class NeuralNetwork {
 
     /**
      * Performs the back propagation algorithm
+     * @param {Matrix | Matrix[]} inputs
      * @param {number[] | Matrix} targets The target outputs
      */
-    _backPropagation(targets) {
+    _backPropagation(inputs, targets) {
 
         let targetsMatrix = (targets instanceof Matrix) ? targets :
                                                           Matrix.fromArray(targets, Matrix.COLUMN);
         let outputLayer = this.layers[this.layers.length-1];
 
         let dErrorActivation = this.dErrorFn(outputLayer.neurons, targetsMatrix)
-        for (let i = this.layers.length-1; i > 0; i--) {
+        for (let i = this.layers.length-1; i >= 0; i--) {
 
             let currLayer = this.layers[i];
             let prevLayer = this.layers[i-1];
+
+            let prevActivations
+            if (!prevLayer) {  // currLayer is first hidden layer
+                prevActivations = inputs;
+            } else if (prevLayer instanceof FullyConnectedLayer) {
+                prevActivations = prevLayer.neurons;
+            } else {  // pooling / conv. layer
+                prevActivations = prevLayer.outputs;
+            }
 
             if (currLayer instanceof FullyConnectedLayer) {
 
@@ -196,7 +206,7 @@ class NeuralNetwork {
                     dErrorWeightMatrix,
                     dErrorBiasMatrix,
                     dErrorPrevActivationMatrix
-                } = currLayer.gDFn(currLayer, prevLayer, targetsMatrix, dErrorActivation, currLayer.dActivationFn);
+                } = currLayer.gDFn(currLayer, prevActivations, targetsMatrix, dErrorActivation, currLayer.dActivationFn);
     
                 // subtract the calculated derivatives
                 currLayer.weights.sub(Matrix.mult(dErrorWeightMatrix, this.learningRate));
@@ -206,7 +216,7 @@ class NeuralNetwork {
 
             } else if (currLayer instanceof PoolingLayer) {
 
-                let dErrorPrevActivationMatrices = poolingGD(currLayer, prevLayer, dErrorActivation);
+                let dErrorPrevActivationMatrices = poolingGD(currLayer, prevActivations, dErrorActivation);
                 dErrorActivation = dErrorPrevActivationMatrices;
 
             } else if (currLayer instanceof ConvolutionalLayer) {
@@ -214,7 +224,7 @@ class NeuralNetwork {
                 let {
                     dErrorPrevActivationMatrices,
                     dErrorFilterMatrices
-                } = convolutionalGD(currLayer, prevLayer, dErrorActivation);
+                } = convolutionalGD(currLayer, prevActivations, dErrorActivation);
 
                 for (let i = 0; i < dErrorFilterMatrices.length; i++) {
                     currLayer.filters[i].sub(Matrix.mult(dErrorFilterMatrices[i], this.learningRate));
@@ -228,8 +238,6 @@ class NeuralNetwork {
 
             }
 
-            
-
         }
 
     }
@@ -241,7 +249,7 @@ class NeuralNetwork {
         }
 
         this._feedForward(inputs);
-        this._backPropagation(targets);
+        this._backPropagation(inputs, targets);
 
         let outputLayer = this.layers[this.layers.length-1];
         return {
@@ -261,13 +269,7 @@ class NeuralNetwork {
         return Matrix.to1DArray(this.layers[this.layers.length-1].neurons);
 
     }
-
-    toJSON() {
-
-        return JSON.stringify(this);
-
-    }
-
+    
     static fromJSON(jsonString) {
 
         let obj = JSON.parse(jsonString);
