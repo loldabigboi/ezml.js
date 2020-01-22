@@ -152,16 +152,15 @@ class NeuralNetwork {
                 if (!(prevLayer instanceof FullyConnectedLayer)) {  // last layer was conv/pooling or does not exist
                     
                     let newInputs = inputs;
-                    if (prevLayer) {  // prev layer does exists
+                    if (prevLayer) {  // prev layer exists
                         // need to flatten inputs
                         newInputs = [];
                         for (let m of inputs) {
                             newInputs = newInputs.concat(m.to1DArray());
                         }
+                        // then convert to column vector
+                        inputs = Matrix.fromArray(newInputs, Matrix.COLUMN);
                     }
-
-                    // then convert to column vector
-                    inputs = Matrix.fromArray(newInputs, Matrix.COLUMN);
 
                 }
 
@@ -186,7 +185,7 @@ class NeuralNetwork {
         let outputLayer = this.layers[this.layers.length-1];
 
         let dErrorActivation = this.dErrorFn(outputLayer.neurons, targetsMatrix)
-        for (let i = this.layers.length-1; i >= 0; i--) {
+        for (let i = this.layers.length-1; i > 0; i--) {
 
             let currLayer = this.layers[i];
             let prevLayer = this.layers[i-1];
@@ -254,7 +253,7 @@ class NeuralNetwork {
         let outputLayer = this.layers[this.layers.length-1];
         return {
             guess: Matrix.to1DArray(outputLayer.neurons),
-            error: this.errorFn(outputLayer.neurons, Matrix.fromArray(targets, Matrix.COLUMN))
+            error: this.errorFn(outputLayer.neurons, targets)
         }
 
     }

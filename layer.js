@@ -149,7 +149,7 @@ class ConvolutionalLayer {
                     for (let col = 0; col < this.outputDimensions[1]; col++) {
 
                         let newVal = 0;
-                        for (let filterRow = -rowOffset; filterRow     <= rowOffset; filterRow++) {
+                        for (let filterRow = -rowOffset; filterRow <= rowOffset; filterRow++) {
                             for (let filterCol = -colOffset; filterCol <= colOffset; filterCol++) {
                                 
                                 let actualRow = row + rowOffset + filterRow,

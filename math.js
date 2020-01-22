@@ -465,6 +465,8 @@ function crossEntropySoftmaxGD(currLayer, prevActivations, targets, dErrorActiva
 
     });
 
+    //console.log(dErrorZMatrix);
+
     return {
         dErrorWeightMatrix,
         dErrorBiasMatrix,
